@@ -1,66 +1,290 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Snap & Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
-  <link href="styles.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snap & Report Bot</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f8fafc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 480px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+        }
+        h1 {
+            text-align: center;
+            color: #6b73ff;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .location-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        #map {
+            height: 150px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .photo-upload {
+            border: 2px dashed #ddd;
+            padding: 12px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .photo-upload:hover {
+            border-color: #6b73ff;
+        }
+        .photo-preview {
+            max-width: 100%;
+            max-height: 120px;
+            margin-top: 10px;
+            display: none;
+        }
+        .submit-button {
+            background: #6b73ff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .submit-button:hover {
+            background: #5a63d9;
+        }
+        .confirmation-message {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .confirmation-message h3 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .confirmation-message p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .submit-another {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .submit-another:hover {
+            background: #e5e7eb;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Snap & Report Template Card Content -->
-  <div class="snap-report-container">
-    <div class="card">
-      <h2>Snap & Report</h2>
-      <form id="reportForm" autocomplete="off">
-        <div class="step-title">1. What would you like to report?</div>
-        <label for="category">Choose an issue type</label>
-        <select id="category" name="category" required>
-          <option value="">Select...</option>
-          <option value="Broken Equipment">Broken Equipment</option>
-          <option value="Graffiti">Graffiti</option>
-          <option value="Lighting Issue">Lighting Issue</option>
-          <option value="Safety Hazard">Safety Hazard</option>
-          <option value="Other">Other</option>
-        </select>
-
-        <label for="severity">Severity</label>
-        <select id="severity" name="severity" required>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-          <option value="High">High</option>
-        </select>
-
-        <div class="step-title">2. Where is the issue?</div>
-        <label for="landmark">Landmark (optional)</label>
-        <input type="text" id="landmark" name="landmark" placeholder="Nearby landmark or building">
-
-        <label for="location">Address or coordinates</label>
-        <div class="location-row">
-          <input type="text" id="location" name="location" placeholder="Type address or use location" required aria-label="Location">
-          <button type="button" onclick="getLocation()" aria-label="Use my location">📍</button>
+    <div class="container">
+        <h1>Snap & Report</h1>
+        <form class="snap-report-form">
+            <div class="form-group">
+                <label for="category">Issue Type</label>
+                <select id="category" required>
+                    <option value="">Select an issue type</option>
+                    <option value="Broken Equipment">Broken Equipment</option>
+                    <option value="Graffiti">Graffiti</option>
+                    <option value="Lighting Issue">Lighting Issue</option>
+                    <option value="Safety Hazard">Safety Hazard</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="severity">Severity</label>
+                <select id="severity" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="landmark">Nearby Landmark (Optional)</label>
+                <input type="text" id="landmark" placeholder="e.g., City Hall, Main Street">
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <div class="location-input-row">
+                    <input type="text" id="location" required placeholder="Address or coordinates">
+                    <button type="button" id="get-location-btn">Get My Location</button>
+                </div>
+                <div id="map"></div>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" required placeholder="Please describe the issue in detail"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Photo (Optional)</label>
+                <div class="photo-upload">
+                    <input type="file" id="photo" accept="image/*" style="display: none">
+                    <p>Click to upload a photo</p>
+                    <img class="photo-preview">
+                </div>
+            </div>
+            <button type="submit" class="submit-button">Submit Report</button>
+        </form>
+        <div class="confirmation-message">
+            <h3>Report Submitted Successfully!</h3>
+            <p>Your reference number is: <span class="reference-number"></span></p>
+            <button class="submit-another">Submit Another Report</button>
         </div>
-        <div id="map"></div>
-
-        <div class="step-title">3. Tell us more</div>
-        <label for="description">Describe the issue</label>
-        <textarea id="description" name="description" rows="3" required placeholder="Please provide details..."></textarea>
-
-        <div class="step-title">4. Add a photo (optional)</div>
-        <div class="upload-box">
-          <input type="file" id="photo" name="photo" accept="image/*" aria-label="Upload photo" onchange="previewPhoto(event)">
-          <img id="photoPreview" class="photo-preview" alt="Photo preview" />
-        </div>
-
-        <button type="submit">Submit Report</button>
-      </form>
-      <div class="confirmation" id="confirmationMsg"></div>
     </div>
-  </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    let map, marker, photoPreview;
 
-  <!-- Add required scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></script>
-  <script src="snap-report/script.js"></script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Get location button
+        document.getElementById('get-location-btn').addEventListener('click', getLocation);
+
+        // Set up photo preview
+        photoPreview = document.querySelector('.photo-preview');
+        document.querySelector('.photo-upload').addEventListener('click', function() {
+            document.getElementById('photo').click();
+        });
+        document.getElementById('photo').addEventListener('change', previewPhoto);
+
+        // Form submit
+        document.querySelector('.snap-report-form').addEventListener('submit', handleSubmit);
+
+        // Submit another report
+        document.querySelector('.submit-another').addEventListener('click', function() {
+            document.querySelector('.snap-report-form').reset();
+            document.querySelector('.snap-report-form').style.display = 'block';
+            document.querySelector('.confirmation-message').style.display = 'none';
+            if (photoPreview) {
+                photoPreview.style.display = 'none';
+            }
+        });
+    });
+
+    function getLocation() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            document.getElementById('location').value = lat.toFixed(5) + ', ' + lng.toFixed(5);
+            if (!map) {
+                map = L.map('map').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            } else {
+                map.setView([lat, lng], 16);
+            }
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng]).addTo(map);
+        }, function() {
+            alert('Unable to retrieve your location.');
+        });
+    }
+
+    function previewPhoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                photoPreview.src = e.target.result;
+                photoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+
+        const formData = {
+            category: document.getElementById('category').value,
+            severity: document.getElementById('severity').value,
+            landmark: document.getElementById('landmark').value,
+            location: document.getElementById('location').value,
+            description: document.getElementById('description').value
+        };
+
+        // Add photo if present
+        const photoInput = document.getElementById('photo');
+        if (photoInput.files.length > 0) {
+            const file = photoInput.files[0];
+            formData.photo = await readFileAsBase64(file);
+            formData.fileName = file.name;
+        }
+
+        // Here you would send formData to your backend if needed
+
+        // Show confirmation
+        document.querySelector('.snap-report-form').style.display = 'none';
+        document.querySelector('.confirmation-message').style.display = 'block';
+        document.querySelector('.reference-number').textContent = 'SR' + Date.now().toString().slice(-6);
+    }
+
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+    </script>
 </body>
-</html> 
+</html>

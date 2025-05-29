@@ -20,6 +20,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
             padding: 2rem 1.5rem 1.5rem 1.5rem;
+            position: relative;
         }
         h1 {
             text-align: center;
@@ -52,6 +53,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            position: relative;
         }
         #map {
             height: 150px;
@@ -103,7 +105,7 @@
             color: #666;
             margin-bottom: 20px;
         }
-        .submit-another {
+        .submit-another, .close-report {
             background: #f3f4f6;
             color: #374151;
             border: 1px solid #d1d5db;
@@ -111,9 +113,42 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 1rem;
+            margin: 0 8px;
         }
-        .submit-another:hover {
+        .submit-another:hover, .close-report:hover {
             background: #e5e7eb;
+        }
+        .autocomplete-suggestions {
+            border: 1px solid #ddd;
+            background: #fff;
+            position: absolute;
+            z-index: 1000;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+            left: 0;
+            top: 38px;
+        }
+        .autocomplete-suggestion {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .autocomplete-suggestion:hover {
+            background: #f0f0f0;
+        }
+        .spinner {
+            display: none;
+            margin: 30px auto 10px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6b73ff;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
         }
         @media (max-width: 600px) {
             .container {
@@ -127,7 +162,7 @@
 <body>
     <div class="container">
         <h1>Snap & Report</h1>
-        <form class="snap-report-form">
+        <form class="snap-report-form" autocomplete="off">
             <div class="form-group">
                 <label for="category">Issue Type</label>
                 <select id="category" required>
@@ -151,11 +186,12 @@
                 <label for="landmark">Nearby Landmark (Optional)</label>
                 <input type="text" id="landmark" placeholder="e.g., City Hall, Main Street">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="position:relative;">
                 <label for="location">Location</label>
                 <div class="location-input-row">
-                    <input type="text" id="location" required placeholder="Address or coordinates">
+                    <input type="text" id="location" required placeholder="Address or coordinates" autocomplete="off">
                     <button type="button" id="get-location-btn">Get My Location</button>
+                    <div id="autocomplete-list" class="autocomplete-suggestions"></div>
                 </div>
                 <div id="map"></div>
             </div>
@@ -173,10 +209,12 @@
             </div>
             <button type="submit" class="submit-button">Submit Report</button>
         </form>
+        <div class="spinner"></div>
         <div class="confirmation-message">
             <h3>Report Submitted Successfully!</h3>
             <p>Your reference number is: <span class="reference-number"></span></p>
             <button class="submit-another">Submit Another Report</button>
+            <button class="close-report">Close</button>
         </div>
     </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -212,6 +250,19 @@
                 photoPreview.style.display = 'none';
             }
         });
+
+        // Close button
+        document.querySelector('.close-report').addEventListener('click', function() {
+            // If in a modal/iframe, try to notify parent to close
+            if (window.parent !== window) {
+                window.parent.postMessage('closeSnapReportModal', '*');
+            } else {
+                window.close();
+            }
+        });
+
+        // Address autocomplete
+        setupAutocomplete();
     });
 
     function getLocation() {
@@ -253,28 +304,18 @@
     async function handleSubmit(event) {
         event.preventDefault();
 
-        const formData = {
-            category: document.getElementById('category').value,
-            severity: document.getElementById('severity').value,
-            landmark: document.getElementById('landmark').value,
-            location: document.getElementById('location').value,
-            description: document.getElementById('description').value
-        };
-
-        // Add photo if present
-        const photoInput = document.getElementById('photo');
-        if (photoInput.files.length > 0) {
-            const file = photoInput.files[0];
-            formData.photo = await readFileAsBase64(file);
-            formData.fileName = file.name;
-        }
-
-        // Here you would send formData to your backend if needed
-
-        // Show confirmation
+        // Show spinner
         document.querySelector('.snap-report-form').style.display = 'none';
-        document.querySelector('.confirmation-message').style.display = 'block';
-        document.querySelector('.reference-number').textContent = 'SR' + Date.now().toString().slice(-6);
+        document.querySelector('.spinner').style.display = 'block';
+
+        // Simulate delay (e.g., sending to backend)
+        setTimeout(() => {
+            document.querySelector('.spinner').style.display = 'none';
+            document.querySelector('.confirmation-message').style.display = 'block';
+            document.querySelector('.reference-number').textContent = 'SR' + Date.now().toString().slice(-6);
+        }, 1500);
+
+        // If you want to send data to a backend, do it here (before setTimeout)
     }
 
     function readFileAsBase64(file) {
@@ -283,6 +324,54 @@
             reader.onload = () => resolve(reader.result);
             reader.onerror = reject;
             reader.readAsDataURL(file);
+        });
+    }
+
+    function setupAutocomplete() {
+        const locationInput = document.getElementById('location');
+        const autocompleteList = document.getElementById('autocomplete-list');
+
+        locationInput.addEventListener('input', function() {
+            const query = this.value;
+            // If input is coordinates, update map directly
+            if (/\d+\.\d+,\s*\d+\.\d+/.test(query)) {
+                const [lat, lng] = query.split(',').map(Number);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    map.setView([lat, lng], 16);
+                    if (marker) marker.remove();
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
+                autocompleteList.innerHTML = '';
+                return;
+            }
+            if (!query) {
+                autocompleteList.innerHTML = '';
+                return;
+            }
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    autocompleteList.innerHTML = '';
+                    data.slice(0, 5).forEach(place => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        div.textContent = place.display_name;
+                        div.addEventListener('click', function() {
+                            locationInput.value = place.display_name;
+                            autocompleteList.innerHTML = '';
+                            // Update map
+                            if (map) {
+                                map.setView([place.lat, place.lon], 16);
+                                if (marker) marker.remove();
+                                marker = L.marker([place.lat, place.lon]).addTo(map);
+                            }
+                        });
+                        autocompleteList.appendChild(div);
+                    });
+                });
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target !== locationInput) autocompleteList.innerHTML = '';
         });
     }
     </script>

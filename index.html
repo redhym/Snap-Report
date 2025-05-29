@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Snap & Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
+  <link href="styles.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- Snap & Report Template Card Content -->
+  <div class="snap-report-container">
+    <div class="card">
+      <h2>Snap & Report</h2>
+      <form id="reportForm" autocomplete="off">
+        <div class="step-title">1. What would you like to report?</div>
+        <label for="category">Choose an issue type</label>
+        <select id="category" name="category" required>
+          <option value="">Select...</option>
+          <option value="Broken Equipment">Broken Equipment</option>
+          <option value="Graffiti">Graffiti</option>
+          <option value="Lighting Issue">Lighting Issue</option>
+          <option value="Safety Hazard">Safety Hazard</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="severity">Severity</label>
+        <select id="severity" name="severity" required>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+          <option value="High">High</option>
+        </select>
+
+        <div class="step-title">2. Where is the issue?</div>
+        <label for="landmark">Landmark (optional)</label>
+        <input type="text" id="landmark" name="landmark" placeholder="Nearby landmark or building">
+
+        <label for="location">Address or coordinates</label>
+        <div class="location-row">
+          <input type="text" id="location" name="location" placeholder="Type address or use location" required aria-label="Location">
+          <button type="button" onclick="getLocation()" aria-label="Use my location">📍</button>
+        </div>
+        <div id="map"></div>
+
+        <div class="step-title">3. Tell us more</div>
+        <label for="description">Describe the issue</label>
+        <textarea id="description" name="description" rows="3" required placeholder="Please provide details..."></textarea>
+
+        <div class="step-title">4. Add a photo (optional)</div>
+        <div class="upload-box">
+          <input type="file" id="photo" name="photo" accept="image/*" aria-label="Upload photo" onchange="previewPhoto(event)">
+          <img id="photoPreview" class="photo-preview" alt="Photo preview" />
+        </div>
+
+        <button type="submit">Submit Report</button>
+      </form>
+      <div class="confirmation" id="confirmationMsg"></div>
+    </div>
+  </div>
+
+  <!-- Add required scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></script>
+  <script src="snap-report/script.js"></script>
+</body>
+</html> 

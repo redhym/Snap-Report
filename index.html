@@ -257,7 +257,7 @@
             if (window.parent !== window) {
                 window.parent.postMessage('closeSnapReportModal', '*');
             } else {
-                window.close();
+                document.body.innerHTML = '<div style="text-align:center;padding:2rem;"><h2>Thank you for your report!</h2></div>';
             }
         });
 
@@ -292,6 +292,13 @@
     function previewPhoto(event) {
         const file = event.target.files[0];
         if (file) {
+            // Restrict to images only
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file only.');
+                event.target.value = '';
+                if (photoPreview) photoPreview.style.display = 'none';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
                 photoPreview.src = e.target.result;
